@@ -47,7 +47,7 @@ def generate_claim_status(claim_details_df):
 
     # Convert to DataFrame
     return pd.DataFrame(claim_status, columns=[
-        'CLAIM_DTL_ID', 'CLM_STS_ID', 'CLM_STS_CD', 'CLM_STS_START_DT', 'CLM_STS_END_DT'
+        'CLM_DTL_ID', 'CLM_STS_ID', 'CLM_STS_CD', 'CLM_STS_START_DT', 'CLM_STS_END_DT'
     ])
 
 # Load CLAIM_DETAILS dataset

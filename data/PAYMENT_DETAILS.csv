@@ -1,0 +1,113 @@
+CLM_ID,PAYMENT_ID,PAYMENT_DATE,PAYMENT_AMOUNT,PAYMENT_STATUS,PAYMENT_METHOD,PAYMENT_TYP,BNFT_TYP_CD
+2,50001,2017-09-13,540.07,Failed,ACH,ind,DIS
+2,50002,2017-09-10,655.38,Failed,ACH,med,
+2,50003,2017-09-05,533.53,Failed,Wire Transfer,med,
+4,50004,2023-11-24,3505.11,Pending,Wire Transfer,ind,VOC_REHAB
+4,50005,2023-11-13,3552.87,Pending,Wire Transfer,med,
+4,50006,2023-11-29,81.13,Failed,ACH,med,
+6,50007,2024-06-06,479.31,Failed,Wire Transfer,ind,PERM_IMPAIRMENT
+6,50008,2024-05-21,764.05,Failed,Check,med,
+6,50009,2024-05-16,738.52,Processed,Check,med,
+6,50010,2024-06-03,0.0,Pending,Wire Transfer,ind,DIS
+6,50011,2024-05-11,0.0,Failed,ACH,ind,DIS
+6,50012,2024-05-12,0.0,Pending,Check,ind,LOST_WAGES
+6,50013,2024-05-11,0.0,Pending,Wire Transfer,ind,LOST_WAGES
+6,50014,2024-06-07,0.0,Failed,Wire Transfer,ind,VOC_REHAB
+6,50015,2024-06-08,0.0,Pending,ACH,ind,PERM_IMPAIRMENT
+6,50016,2024-06-01,0.0,Processed,Wire Transfer,ind,DIS
+6,50017,2024-05-27,0.0,Failed,Check,ind,LOST_WAGES
+6,50018,2024-06-06,0.0,Processed,Check,med,
+6,50019,2024-05-10,0.0,Processed,ACH,med,
+6,50020,2024-05-21,0.0,Failed,ACH,med,
+6,50021,2024-05-12,0.0,Failed,Check,med,
+6,50022,2024-05-16,0.0,Pending,Check,ind,PERM_IMPAIRMENT
+6,50023,2024-05-21,0.0,Pending,Check,ind,PERM_IMPAIRMENT
+6,50024,2024-06-02,0.0,Processed,ACH,ind,VOC_REHAB
+6,50025,2024-05-12,0.0,Processed,ACH,med,
+6,50026,2024-05-12,0.0,Processed,Check,ind,PERM_IMPAIRMENT
+6,50027,2024-05-16,0.0,Failed,Check,med,
+6,50028,2024-05-19,0.0,Processed,ACH,med,
+6,50029,2024-05-26,0.0,Processed,Wire Transfer,med,
+6,50030,2024-05-22,0.0,Failed,ACH,med,
+6,50031,2024-05-16,0.0,Failed,ACH,ind,VOC_REHAB
+6,50032,2024-05-22,0.0,Pending,Check,med,
+6,50033,2024-06-06,0.0,Pending,Wire Transfer,med,
+6,50034,2024-06-01,0.0,Processed,ACH,ind,DIS
+6,50035,2024-06-05,0.0,Pending,Check,ind,DIS
+6,50036,2024-05-16,0.0,Pending,ACH,med,
+6,50037,2024-05-10,0.0,Failed,Wire Transfer,ind,VOC_REHAB
+6,50038,2024-05-31,0.0,Processed,Check,ind,DIS
+6,50039,2024-05-21,0.0,Pending,ACH,ind,PERM_IMPAIRMENT
+6,50040,2024-05-26,0.0,Processed,ACH,med,
+6,50041,2024-06-06,0.0,Pending,ACH,med,
+6,50042,2024-05-10,0.0,Failed,Wire Transfer,ind,DIS
+6,50043,2024-05-15,0.0,Failed,ACH,med,
+6,50044,2024-05-26,0.0,Failed,Wire Transfer,ind,DIS
+6,50045,2024-05-15,0.0,Pending,ACH,med,
+6,50046,2024-05-10,0.0,Processed,ACH,ind,VOC_REHAB
+6,50047,2024-05-29,0.0,Failed,ACH,ind,PERM_IMPAIRMENT
+6,50048,2024-05-29,0.0,Failed,Check,med,
+6,50049,2024-05-16,0.0,Pending,Check,med,
+6,50050,2024-06-03,0.0,Pending,ACH,med,
+6,50051,2024-05-12,0.0,Failed,Wire Transfer,ind,DIS
+6,50052,2024-05-26,0.0,Pending,Check,ind,LOST_WAGES
+6,50053,2024-05-14,0.0,Failed,ACH,med,
+6,50054,2024-05-28,0.0,Failed,Wire Transfer,ind,DIS
+6,50055,2024-05-20,0.0,Processed,Wire Transfer,ind,VOC_REHAB
+6,50056,2024-05-25,0.0,Pending,Check,med,
+7,50057,2011-08-28,3048.16,Pending,Wire Transfer,ind,LOST_WAGES
+7,50058,2011-09-08,2072.13,Processed,Check,ind,DIS
+7,50059,2011-08-26,1073.91,Failed,ACH,med,
+8,50060,2014-05-23,893.06,Failed,ACH,ind,PERM_IMPAIRMENT
+8,50061,2014-06-06,840.29,Pending,Wire Transfer,med,
+8,50062,2014-05-15,1056.77,Failed,ACH,ind,DIS
+8,50063,2014-06-04,263.93,Failed,Check,med,
+8,50064,2014-05-23,0.0,Failed,ACH,ind,DIS
+8,50065,2014-05-19,0.0,Pending,Check,ind,DIS
+8,50066,2014-06-04,0.0,Processed,Check,ind,DIS
+8,50067,2014-05-28,0.0,Failed,ACH,ind,DIS
+8,50068,2014-06-05,0.0,Processed,ACH,med,
+8,50069,2014-05-25,0.0,Processed,Wire Transfer,med,
+8,50070,2014-05-10,0.0,Pending,Wire Transfer,ind,PERM_IMPAIRMENT
+8,50071,2014-05-09,0.0,Failed,ACH,ind,LOST_WAGES
+8,50072,2014-05-15,0.0,Processed,Check,med,
+8,50073,2014-05-14,0.0,Processed,Wire Transfer,med,
+8,50074,2014-05-25,0.0,Processed,Check,ind,LOST_WAGES
+8,50075,2014-05-11,0.0,Processed,Check,ind,VOC_REHAB
+8,50076,2014-05-21,0.0,Failed,ACH,med,
+8,50077,2014-05-09,0.0,Failed,ACH,ind,PERM_IMPAIRMENT
+8,50078,2014-06-06,0.0,Processed,Wire Transfer,ind,LOST_WAGES
+8,50079,2014-05-27,0.0,Pending,Wire Transfer,med,
+8,50080,2014-06-04,0.0,Processed,Check,ind,DIS
+8,50081,2014-05-19,0.0,Processed,ACH,ind,LOST_WAGES
+8,50082,2014-05-27,0.0,Pending,ACH,med,
+8,50083,2014-05-27,0.0,Processed,Wire Transfer,ind,LOST_WAGES
+8,50084,2014-05-24,0.0,Failed,ACH,ind,LOST_WAGES
+8,50085,2014-05-12,0.0,Pending,Check,ind,PERM_IMPAIRMENT
+8,50086,2014-05-19,0.0,Processed,Check,ind,LOST_WAGES
+8,50087,2014-05-09,0.0,Pending,Wire Transfer,ind,DIS
+8,50088,2014-05-28,0.0,Processed,Check,med,
+8,50089,2014-05-12,0.0,Pending,Check,med,
+8,50090,2014-06-02,0.0,Failed,Check,ind,DIS
+8,50091,2014-06-04,0.0,Processed,ACH,med,
+8,50092,2014-06-06,0.0,Processed,Wire Transfer,ind,VOC_REHAB
+8,50093,2014-05-11,0.0,Processed,Wire Transfer,ind,DIS
+8,50094,2014-05-17,0.0,Pending,Check,ind,LOST_WAGES
+8,50095,2014-05-17,0.0,Pending,ACH,ind,VOC_REHAB
+8,50096,2014-05-12,0.0,Processed,ACH,ind,DIS
+8,50097,2014-06-03,0.0,Pending,ACH,ind,DIS
+8,50098,2014-05-26,0.0,Failed,Check,ind,PERM_IMPAIRMENT
+8,50099,2014-05-15,0.0,Pending,ACH,ind,DIS
+8,50100,2014-05-21,0.0,Pending,Check,med,
+8,50101,2014-05-30,0.0,Processed,Wire Transfer,ind,DIS
+8,50102,2014-06-02,0.0,Pending,Wire Transfer,med,
+8,50103,2014-05-11,0.0,Pending,Check,ind,DIS
+8,50104,2014-05-31,0.0,Processed,Check,med,
+8,50105,2014-05-17,0.0,Processed,Check,ind,VOC_REHAB
+8,50106,2014-05-10,0.0,Pending,Check,med,
+8,50107,2014-05-30,0.0,Pending,Check,ind,DIS
+8,50108,2014-05-30,0.0,Processed,ACH,med,
+8,50109,2014-05-24,0.0,Pending,Check,ind,DIS
+10,50110,2011-08-04,2188.39,Processed,Check,med,
+10,50111,2011-07-25,1061.78,Pending,ACH,ind,VOC_REHAB
+10,50112,2011-08-02,1419.32,Processed,Check,med,

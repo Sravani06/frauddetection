@@ -8,13 +8,21 @@ fake = Faker()
 np.random.seed(42)
 
 # Load CLAIM_DETAILS and CLAIM_STATUS datasets
-claim_details_df = pd.read_csv('data/CLAIM_DETAILS.csv')
-claim_status_df = pd.read_csv('data/CLAIM_STATUS.csv')
+try:
+    claim_details_df = pd.read_csv('data/CLAIM_DETAILS.csv')
+    claim_status_df = pd.read_csv('data/CLAIM_STATUS.csv')
+except FileNotFoundError as e:
+    print(f"Error loading files: {e}")
+    exit(1)
 
 # Function to check if a claim is denied
 def is_claim_denied(claim_id, claim_status):
-    final_status = claim_status[claim_status['CLAIM_DTL_ID'] == claim_id].iloc[-1]
-    return final_status['CLM_STS_CD'] == 'Declined'
+    try:
+        final_status = claim_status[claim_status['CLM_DTL_ID'] == claim_id].iloc[-1]
+        return final_status['CLM_STS_CD'] == 'Declined'
+    except IndexError:
+        print(f"Warning: No status found for claim ID {claim_id}. Skipping.")
+        return True
 
 # Function to generate PAYMENT_DETAILS dataset
 def generate_payment_details(claim_details, claim_status):
@@ -24,8 +32,13 @@ def generate_payment_details(claim_details, claim_status):
     # Iterate over each claim in CLAIM_DETAILS
     for _, claim_row in claim_details.iterrows():
         clm_id = claim_row['CLM_DTL_ID']
-        clm_occr_dt = pd.to_datetime(claim_row['CLM_OCCR_DT'])
+        clm_occr_dt = pd.to_datetime(claim_row['CLM_OCCR_DT'], errors='coerce')
         clm_amt = claim_row['CLM_AMT']
+
+        # Check for invalid data
+        if pd.isna(clm_occr_dt) or pd.isna(clm_amt):
+            print(f"Skipping claim ID {clm_id} due to missing data.")
+            continue
 
         # Skip denied claims
         if is_claim_denied(clm_id, claim_status):
@@ -33,7 +46,13 @@ def generate_payment_details(claim_details, claim_status):
 
         # Generate multiple payments for the claim
         remaining_amount = clm_amt
+        iteration_count = 0
         while remaining_amount > 0:
+            iteration_count += 1
+            if iteration_count > 50:  # Safety check to prevent infinite loops
+                print(f"Exceeded iteration limit for claim ID {clm_id}. Skipping.")
+                break
+
             # PAYMENT_AMOUNT: Random portion (20% to 50%) of remaining amount
             payment_amount = round(min(remaining_amount, clm_amt * np.random.uniform(0.2, 0.5)), 2)
             remaining_amount -= payment_amount
@@ -68,10 +87,16 @@ def generate_payment_details(claim_details, claim_status):
         'PAYMENT_STATUS', 'PAYMENT_METHOD', 'PAYMENT_TYP', 'BNFT_TYP_CD'
     ])
 
+# Debugging: Process a subset of claims for testing
+print("Processing payment details generation...")
+claim_details_df = claim_details_df.head(10)  # Remove this line to process the full dataset
+
 # Generate the PAYMENT_DETAILS dataset
 payment_details_df = generate_payment_details(claim_details_df, claim_status_df)
 
 # Save the dataset to a CSV file
-payment_details_df.to_csv('data/PAYMENT_DETAILS.csv', index=False)
-
-print("PAYMENT_DETAILS dataset generated and saved as 'data/PAYMENT_DETAILS.csv'.")
+try:
+    payment_details_df.to_csv('data/PAYMENT_DETAILS.csv', index=False)
+    print("PAYMENT_DETAILS dataset generated and saved as 'data/PAYMENT_DETAILS.csv'.")
+except Exception as e:
+    print(f"Error saving PAYMENT_DETAILS.csv: {e}")
