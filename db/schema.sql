@@ -1,91 +1,133 @@
-CREATE TABLE IF NOT EXISTS policy_details (
-    PLCY_NO TEXT PRIMARY KEY,       -- Policy number
-    PLCY_STRT_DT DATE,              -- Policy start date
-    PLCY_END_DT DATE                -- Policy end date
+-- ==========================
+-- DROP EXISTING TABLES
+-- ==========================
+DROP TABLE IF EXISTS CUSTOMER_DETAILS;
+DROP TABLE IF EXISTS CLAIM_DETAILS;
+DROP TABLE IF EXISTS POLICY_DETAILS;
+DROP TABLE IF EXISTS CLAIM_PARTICIPANT;
+DROP TABLE IF EXISTS CLAIM_STATUS;
+DROP TABLE IF EXISTS CLAIM_ADDITIONAL_DETAILS;
+DROP TABLE IF EXISTS CLAIM_INJURY_DETAILS;
+DROP TABLE IF EXISTS PAYMENT_DETAILS;
+
+-- ==========================
+-- CREATE TABLES
+-- ==========================
+
+-- CUSTOMER_DETAILS TABLE
+CREATE TABLE CUSTOMER_DETAILS (
+    CUST_ID INTEGER PRIMARY KEY,
+    CUST_TYP TEXT CHECK(CUST_TYP IN ('prsn', 'busn')),
+    CUST_FRST_NM TEXT,
+    CUST_LST_NM TEXT,
+    CUST_GENDER TEXT CHECK(CUST_GENDER IN ('Male', 'Female', 'Other')),
+    CUST_DOB DATE,
+    CUST_DOD DATE,
+    CUST_ADDR TEXT,
+    CUST_CITY TEXT,
+    CUST_STATE TEXT,
+    CUST_ZIP TEXT,
+    CUST_PH_NO TEXT,
+    CUST_EMAIL TEXT,
+    CUST_TAX_ID TEXT,
+    CUST_TAX_ID_TYP TEXT CHECK(CUST_TAX_ID_TYP IN ('SSN', 'EIN'))
 );
 
-CREATE TABLE IF NOT EXISTS customer_details (
-    CUST_ID INTEGER PRIMARY KEY,    -- Customer ID (numeric)
-    CUST_TYP TEXT,                  -- Customer type: 'prsn' or 'busn'
-    CUST_FRST_NM TEXT,              -- First name
-    CUST_LST_NM TEXT,               -- Last name
-    CUST_GENDER TEXT,               -- Gender
-    CUST_DOB DATE,                  -- Date of birth
-    CUST_DOD DATE,                  -- Date of death
-    CUST_ADDR TEXT,                 -- Address
-    CUST_CITY TEXT,                 -- City
-    CUST_STATE TEXT,                -- State
-    CUST_ZIP INTEGER,               -- Zip code
-    CUST_PH_NO TEXT,                -- Phone number
-    CUST_EMAIL TEXT,                -- Email address
-    CUST_TAX_ID TEXT,               -- Tax ID
-    CUST_TAX_ID_TYP TEXT            -- Tax ID type
+-- CLAIM_DETAILS TABLE
+CREATE TABLE CLAIM_DETAILS (
+    CLM_DTL_ID INTEGER PRIMARY KEY,
+    CLM_NO TEXT UNIQUE,
+    PLCY_NO TEXT,
+    CLM_JUR_TYP_CD TEXT,
+    CLM_RPT_DT DATE,
+    CLM_OCCR_DT DATE,
+    CLM_OCCR_ADDR TEXT,
+    CLM_OCCR_CITY TEXT,
+    CLM_OCCR_ZIP TEXT,
+    CLM_OCCR_STATE TEXT,
+    CLM_TYP TEXT CHECK(CLM_TYP IN ('Medical', 'Indemnity')),
+    CLM_AMT REAL,
+    FOREIGN KEY (PLCY_NO) REFERENCES POLICY_DETAILS(PLCY_NO)
 );
 
-CREATE TABLE IF NOT EXISTS claim_details (
-    CLM_DTL_ID INTEGER PRIMARY KEY, -- Claim detail ID (numeric)
-    CLM_NO INTEGER,                 -- Claim number
-    PLCY_NO TEXT,                   -- Policy number (FK to policy_details)
-    CLM_JUR_TYP_CD TEXT,            -- Jurisdiction type code
-    CLM_RPT_DT DATE,                -- Claim reported date
-    CLM_OCCR_DT DATE,               -- Claim occurrence date
-    CLM_OCCR_ADDR TEXT,             -- Claim occurrence address
-    CLM_OCCR_CITY TEXT,             -- Claim occurrence city
-    CLM_OCCR_ZIP INTEGER,           -- Claim occurrence zip code
-    CLM_OCCR_STATE TEXT,            -- Claim occurrence state
-    CLM_TYP TEXT,                   -- Claim type: 'medical' or 'indemnity'
-    CLM_AMT REAL,                   -- Claim amount
-    FOREIGN KEY (PLCY_NO) REFERENCES policy_details (PLCY_NO)
+-- POLICY_DETAILS TABLE
+CREATE TABLE POLICY_DETAILS (
+    PLCY_DTL_ID INTEGER PRIMARY KEY,
+    PLCY_NO TEXT UNIQUE,
+    PLCY_STRT_DT DATE,
+    PLCY_END_DT DATE
 );
 
-CREATE TABLE IF NOT EXISTS claim_status (
-    CLM_STS_ID INTEGER PRIMARY KEY, -- Claim status ID (numeric)
-    CLM_DTL_ID INTEGER,             -- Claim detail ID (FK to claim_details)
-    CLM_STS_CD TEXT,                -- Claim status code
-    CLM_STS_START_DT DATE,          -- Claim status start date
-    CLM_STS_END_DT DATE,            -- Claim status end date
-    FOREIGN KEY (CLM_DTL_ID) REFERENCES claim_details (CLM_DTL_ID)
+-- CLAIM_PARTICIPANT TABLE
+CREATE TABLE CLAIM_PARTICIPANT (
+    CLM_PTCP_ID INTEGER PRIMARY KEY,
+    CLM_ID INTEGER,
+    CUST_ID INTEGER,
+    CUST_TYP TEXT CHECK(CUST_TYP IN ('prsn', 'busn')),
+    PTCP_TYP TEXT CHECK(PTCP_TYP IN ('Claimant', 'Insured', 'Provider')),
+    FOREIGN KEY (CLM_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID),
+    FOREIGN KEY (CUST_ID) REFERENCES CUSTOMER_DETAILS(CUST_ID)
 );
 
-CREATE TABLE IF NOT EXISTS claim_participant (
-    CLM_PTCP_ID INTEGER PRIMARY KEY, -- Claim participant ID (numeric)
-    CLM_DTL_ID INTEGER,              -- Claim detail ID (FK to claim_details)
-    CUST_ID INTEGER,                 -- Customer ID (FK to customer_details)
-    PTCP_TYP TEXT,                   -- Participant type: 'clmt', 'insured', etc.
-    FOREIGN KEY (CLM_DTL_ID) REFERENCES claim_details (CLM_DTL_ID),
-    FOREIGN KEY (CUST_ID) REFERENCES customer_details (CUST_ID)
+-- CLAIM_STATUS TABLE
+CREATE TABLE CLAIM_STATUS (
+    CLM_STS_ID INTEGER PRIMARY KEY,
+    CLM_DTL_ID INTEGER,
+    CLM_STS_CD TEXT CHECK(CLM_STS_CD IN ('Pending', 'Accepted', 'Declined')),
+    CLM_STS_START_DT DATETIME,
+    CLM_STS_END_DT DATETIME,
+    STATUS_REASON TEXT,
+    STATUS_UPDATED_BY TEXT,
+    STATUS_SOURCE TEXT CHECK(STATUS_SOURCE IN ('Manual', 'Automated')),
+    FOREIGN KEY (CLM_DTL_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
 );
 
-CREATE TABLE IF NOT EXISTS claim_additional_details (
-    CLM_ID INTEGER PRIMARY KEY,     -- Claim ID (numeric, FK to claim_details)
-    CLMT_HIRE_DT DATE,              -- Claimant hire date
-    CLMT_JOB_TTL TEXT,              -- Job title
-    CLMT_JOB_TYP TEXT,              -- Job type: 'fulltime' or 'parttime'
-    CLMT_DISAB_BGN_DT DATE,         -- Disability start date
-    CLMT_AVG_WKLY_WAGE REAL,        -- Average weekly wage
-    WORK_LOC TEXT,                  -- Work location
-    INDUSTRY TEXT,                  -- Industry
-    FOREIGN KEY (CLM_ID) REFERENCES claim_details (CLM_DTL_ID)
+-- CLAIM_ADDITIONAL_DETAILS TABLE
+CREATE TABLE CLAIM_ADDITIONAL_DETAILS (
+    CLM_DTL_ID INTEGER PRIMARY KEY,
+    CLMT_HIRE_DT DATE,
+    CLMT_JOB_TTL TEXT,
+    CLMT_JOB_TYP TEXT CHECK(CLMT_JOB_TYP IN ('Full-time', 'Part-time')),
+    CLMT_DISAB_BGN_DT DATE,
+    CLMT_AVG_WKLY_WAGE REAL,
+    WORK_LOC TEXT,
+    INDUSTRY TEXT,
+    JOB_DESC TEXT,
+    WORK_ENVIRONMENT TEXT CHECK(WORK_ENVIRONMENT IN ('On-site', 'Remote', 'Hybrid')),
+    SUPERVISOR_NAME TEXT,
+    REPORTING_CHANNEL TEXT CHECK(REPORTING_CHANNEL IN ('Web', 'Phone', 'Email')),
+    EMPLOYMENT_STATUS TEXT CHECK(EMPLOYMENT_STATUS IN ('Active', 'Terminated', 'On Leave')),
+    FOREIGN KEY (CLM_DTL_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
 );
 
-CREATE TABLE IF NOT EXISTS payment_details (
-    PAYMENT_ID INTEGER PRIMARY KEY, -- Payment ID (numeric)
-    CLM_ID INTEGER,                 -- Claim ID (FK to claim_details)
-    PAYMENT_DATE DATE,              -- Payment date
-    PAYMENT_AMOUNT REAL,            -- Payment amount
-    PAYMENT_STATUS TEXT,            -- Payment status
-    PAYMENT_METHOD TEXT,            -- Payment method: 'check', 'wire transfer', etc.
-    PAYMENT_TYP TEXT,               -- Payment type: 'medical' or 'indemnity'
-    BNFT_TYP_CD TEXT,               -- Benefit type code
-    FOREIGN KEY (CLM_ID) REFERENCES claim_details (CLM_DTL_ID)
+-- CLAIM_INJURY_DETAILS TABLE
+CREATE TABLE CLAIM_INJURY_DETAILS (
+    CLM_INJ_ID INTEGER PRIMARY KEY,
+    CLM_ID INTEGER,
+    INJURY_POB TEXT,
+    INJURY_SEVERITY TEXT CHECK(INJURY_SEVERITY IN ('High', 'Medium', 'Low')),
+    INJURY_TYP_CD TEXT,
+    PRESCRIBER_NOTES TEXT,
+    TREATMENT_REQUIRED TEXT CHECK(TREATMENT_REQUIRED IN ('Yes', 'No')),
+    DAYS_LOST INTEGER,
+    DOCTOR_NAME TEXT,
+    MEDICAL_PROVIDER TEXT,
+    FOREIGN KEY (CLM_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
 );
 
-CREATE TABLE IF NOT EXISTS injury_details (
-    CLM_INJ_ID INTEGER PRIMARY KEY, -- Unique injury ID
-    CLM_ID INTEGER,                 -- Claim ID (FK to claim_details)
-    INJURY_POB TEXT,                -- Place of injury
-    INJURY_SEVERITY TEXT,           -- Severity of injury
-    INJURY_TYP_CD TEXT,             -- Injury type code
-    PRESCRIBER_NOTES TEXT,          -- Notes from prescriber
-    FOREIGN KEY (CLM_ID) REFERENCES claim_details (CLM_DTL_ID) ON DELETE CASCADE
+-- PAYMENT_DETAILS TABLE
+CREATE TABLE PAYMENT_DETAILS (
+    PAYMENT_ID INTEGER PRIMARY KEY,
+    CLM_ID INTEGER,
+    PAYMENT_DATE DATETIME,
+    PAYMENT_AMOUNT REAL,
+    PAYMENT_STATUS TEXT CHECK(PAYMENT_STATUS IN ('Processed', 'Pending', 'Failed')),
+    PAYMENT_METHOD TEXT CHECK(PAYMENT_METHOD IN ('Check', 'Wire Transfer', 'ACH', 'Direct Deposit')),
+    PAYMENT_TYPE TEXT CHECK(PAYMENT_TYPE IN ('Medical', 'Indemnity')),
+    BNFT_TYP_CD TEXT CHECK(BNFT_TYP_CD IN ('DIS', 'LOST_WAGES', 'PERM_IMPAIRMENT', 'VOC_REHAB')),
+    PAYEE_NAME TEXT,
+    PAYEE_ACCOUNT TEXT,
+    CURRENCY TEXT CHECK(CURRENCY IN ('USD', 'EUR', 'GBP', 'CAD', 'JPY')),
+    EXCHANGE_RATE REAL,
+    FOREIGN KEY (CLM_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
 );

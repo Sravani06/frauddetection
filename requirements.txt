@@ -3,4 +3,6 @@ numpy
 scikit-learn
 streamlit
 faker
-matplotlib
+matplotlibs
+xgboost
+psutil

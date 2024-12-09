@@ -1,50 +1,67 @@
 import pandas as pd
 import numpy as np
 from faker import Faker
-from datetime import date, timedelta
+from datetime import timedelta, date
 
 # Initialize Faker
 fake = Faker()
 np.random.seed(42)
 
-# Number of records to generate
-num_policies = 1000
+# Number of policies to generate
+num_policies = 1000  # Changeable as needed
 
-# Function to generate POLICY_DETAILS dataset
-def generate_policy_details(num_records):
+
+def generate_policy_details(num_policies):
     policy_details = []
-    policy_id_start = 40001  # Starting ID for PLCY_DTL_ID
 
-    # Convert start_date and end_date to datetime.date
-    start_date = date(2006, 1, 1)
-    end_date = date(2024, 12, 31)
+    for i in range(1, num_policies + 1):
+        # Policy Unique Identifiers
+        plcy_dtl_id = i
+        plcy_no = f"COF{str(i).zfill(7)}"
 
-    for _ in range(num_records):
-        # PLCY_DTL_ID: Incremental unique ID
-        plcy_dtl_id = policy_id_start
-        policy_id_start += 1
+        # Policy Start and End Dates
+        plcy_strt_dt = fake.date_between(start_date=date(2006, 1, 1), end_date=date(2024, 12, 31))
+        plcy_end_dt = plcy_strt_dt + timedelta(days=365)  # 1-year policy duration
 
-        # PLCY_NO: Unique policy number starting with "COF" + 7 random digits
-        plcy_no = f"COF{np.random.randint(1000000, 9999999)}"
+        # Policy Status
+        plcy_sts = np.random.choice(['Active', 'Lapsed', 'Canceled'], p=[0.7, 0.2, 0.1])
 
-        # PLCY_STRT_DT: Random start date between start_date and end_date
-        plcy_strt_dt = fake.date_between(start_date=start_date, end_date=end_date)
+        # Premium, Claim Limit, and Deductible
+        premium_amt = round(np.random.uniform(500.00, 5000.00), 2)
+        claim_limit = round(np.random.uniform(10000.00, 100000.00), 2)
+        claim_deductible = round(np.random.uniform(500.00, 5000.00), 2)
 
-        # PLCY_END_DT: One year from the start date
-        plcy_end_dt = plcy_strt_dt + timedelta(days=365)
+        # New Column: Policy Maximum Coverage
+        # Set it as a random percentage (between 80% and 120%) of the claim limit.
+        plcy_max_coverage = round(claim_limit * np.random.uniform(0.8, 1.2), 2)
 
-        # Append the record
-        policy_details.append([plcy_dtl_id, plcy_no, plcy_strt_dt, plcy_end_dt])
+        policy_details.append([
+            plcy_dtl_id,
+            plcy_no,
+            plcy_strt_dt,
+            plcy_end_dt,
+            plcy_sts,
+            premium_amt,
+            claim_limit,
+            claim_deductible,
+            plcy_max_coverage
+        ])
 
-    # Convert to DataFrame
     return pd.DataFrame(policy_details, columns=[
-        'PLCY_DTL_ID', 'PLCY_NO', 'PLCY_STRT_DT', 'PLCY_END_DT'
+        'PLCY_DTL_ID',
+        'PLCY_NO',
+        'PLCY_STRT_DT',
+        'PLCY_END_DT',
+        'PLCY_STS',
+        'PREMIUM_AMT',
+        'CLAIM_LIMIT',
+        'CLAIM_DEDUCTIBLE',
+        'PLCY_MAX_COVERAGE'
     ])
 
-# Generate the dataset
-policy_details_df = generate_policy_details(num_policies)
 
-# Save the dataset to a CSV file
+# Generate and save the policy details dataset
+policy_details_df = generate_policy_details(num_policies)
 policy_details_df.to_csv('data/POLICY_DETAILS.csv', index=False)
 
 print("POLICY_DETAILS dataset generated and saved as 'data/POLICY_DETAILS.csv'.")

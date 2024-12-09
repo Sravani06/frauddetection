@@ -11,7 +11,7 @@ np.random.seed(42)
 policy_details_df = pd.read_csv('data/POLICY_DETAILS.csv')
 
 # Number of claims to generate
-num_claims = 1000
+num_claims = 5000  # Generating 10,000 claims as an example
 
 # Function to generate CLAIM_DETAILS dataset
 def generate_claim_details(num_records, policy_details):
@@ -29,7 +29,7 @@ def generate_claim_details(num_records, policy_details):
         clm_year = clm_rpt_dt.year
         clm_no = f"{clm_year}{str(i).zfill(4)}"  # Year + 4-digit incremental number
 
-        # Select a random policy
+        # Select a random policy from POLICY_DETAILS
         selected_policy = np.random.choice(policy_list)
 
         # Get the policy details
@@ -41,7 +41,7 @@ def generate_claim_details(num_records, policy_details):
         clm_occr_dt = fake.date_between(start_date=plcy_start_dt.date(), end_date=plcy_end_dt.date())
 
         # CLM_JUR_TYP_CD: Random state code
-        state_codes = ['CA', 'VA', 'NY', 'TX', 'FL', 'WA', 'MA', 'NV']
+        state_codes = ['CA', 'VA', 'NY', 'TX', 'FL', 'WA', 'MA', 'NV', 'OH', 'MI', 'WV', 'NJ']
         clm_jur_typ_cd = np.random.choice(state_codes)
 
         # CLM_OCCR_ADDR, CLM_OCCR_CITY, CLM_OCCR_ZIP, CLM_OCCR_STATE
@@ -50,11 +50,11 @@ def generate_claim_details(num_records, policy_details):
         clm_occr_zip = fake.zipcode()
         clm_occr_state = clm_jur_typ_cd
 
-        # CLM_TYP: Randomly assign "Medical" or "Indemnity"
-        clm_typ = np.random.choice(['Medical', 'Indemnity'])
+        # CLM_TYP: Randomly assign "Medical" (80%) or "Indemnity" (20%)
+        clm_typ = np.random.choice(['Medical', 'Indemnity'], p=[0.8, 0.2])
 
-        # CLM_AMT: Random decimal value between 200 and 10,000
-        clm_amt = round(np.random.uniform(200.00, 10000.00), 2)
+        # CLM_AMT: Random decimal value between 10 and 10,000
+        clm_amt = round(np.random.uniform(10.00, 10000.00), 2)
 
         # Append the record to the list
         claim_details.append([
@@ -74,4 +74,4 @@ claim_details_df = generate_claim_details(num_claims, policy_details_df)
 # Save the dataset to a CSV file
 claim_details_df.to_csv('data/CLAIM_DETAILS.csv', index=False)
 
-print("CLAIM_DETAILS dataset generated and saved as 'data/CLAIM_DETAILS.csv'.")
+print("✅ CLAIM_DETAILS dataset generated and saved with PLCY_NO as 'data/CLAIM_DETAILS.csv'.")

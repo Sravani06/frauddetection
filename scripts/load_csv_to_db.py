@@ -7,14 +7,14 @@ db_path = "db/claims.db"
 
 # Dictionary mapping CSV files to database tables
 csv_to_table = {
-    "data/POLICY_DETAILS.csv": "policy_details",
-    "data/CUSTOMER_DETAILS.csv": "customer_details",
-    "data/CLAIM_DETAILS.csv": "claim_details",
-    "data/CLAIM_STATUS.csv": "claim_status",
-    "data/CLAIM_PARTICIPANT.csv": "claim_participant",
-    "data/CLAIM_ADDITIONAL_DETAILS.csv": "claim_additional_details",
-    "data/PAYMENT_DETAILS.csv": "payment_details",
-    "data/CLAIM_INJURY_DETAILS.csv": "injury_details"
+    "data/POLICY_DETAILS.csv": "POLICY_DETAILS",
+    "data/CUSTOMER_DETAILS.csv": "CUSTOMER_DETAILS",
+    "data/CLAIM_DETAILS.csv": "CLAIM_DETAILS",
+    "data/CLAIM_STATUS.csv": "CLAIM_STATUS",
+    "data/CLAIM_PARTICIPANT.csv": "CLAIM_PARTICIPANT",
+    "data/CLAIM_ADDITIONAL_DETAILS.csv": "CLAIM_ADDITIONAL_DETAILS",
+    "data/PAYMENT_DETAILS.csv": "PAYMENT_DETAILS",
+    "data/CLAIM_INJURY_DETAILS.csv": "CLAIM_INJURY_DETAILS"
 }
 
 
