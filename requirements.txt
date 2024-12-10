@@ -6,3 +6,4 @@ faker
 matplotlibs
 xgboost
 psutil
+seaborn

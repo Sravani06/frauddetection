@@ -1,53 +1,63 @@
 #!/bin/bash
 
-# Set the data directory
-DATA_DIR="data"
+# Activate the Python virtual environment
+echo " Activating Python virtual environment..."
+source .venv/bin/activate
 
-# List of CSV files and their corresponding scripts
-scripts=(
-  "POLICY_DETAILS.csv:generate_policy_details.py"
-  "CLAIM_DETAILS.csv:generate_claim_details.py"
-  "CUSTOMER_DETAILS.csv:generate_customer_details.py"
-  "CLAIM_STATUS.csv:generate_claim_status.py"
-  "CLAIM_PARTICIPANT.csv:generate_claim_participant.py"
-  "CLAIM_ADDITIONAL_DETAILS.csv:generate_claim_additional_details.py"
-  "CLAIM_INJURY_DETAILS.csv:generate_claim_injury_details.py"
-  "PAYMENT_DETAILS.csv:generate_payment_details.py"
-)
-
-# Ensure the data directory exists
-mkdir -p "$DATA_DIR"
-
-echo "=== Starting Data Generation ==="
-
-# Iterate over the scripts and regenerate CSVs
-for entry in "${scripts[@]}"; do
-  IFS=":" read -r csv_file script <<< "$entry"
-
-  # Check if the file exists and delete it
-  if [ -f "$DATA_DIR/$csv_file" ]; then
-    echo "Deleting existing file: $DATA_DIR/$csv_file"
-    rm "$DATA_DIR/$csv_file"
-  fi
-
-  # Debug: Print current working directory
-  echo "Current Directory: $(pwd)"
-
-  # Run the script
-  echo "Generating $csv_file using $script"
-  python "scripts/$script"
-  if [ $? -ne 0 ]; then
-    echo "Error: $script failed to run. Exiting."
+# Step 1: Generate synthetic data
+echo " Step 1: Generating synthetic data..."
+python scripts/generate_fraud_detection_dataset.py
+if [ $? -ne 0 ]; then
+    echo " Error generating synthetic data. Exiting..."
     exit 1
-  fi
+fi
 
-  # Check if the file was created successfully
-  if [ -f "$DATA_DIR/$csv_file" ]; then
-    echo "$csv_file generated successfully."
-  else
-    echo "Error: Failed to generate $csv_file. Exiting."
+# Step 2: Enhance the unified dataset
+echo " Step 2: Enhancing unified dataset with derived features..."
+python scripts/generate_enhanced_unified_dataset.py
+if [ $? -ne 0 ]; then
+    echo " Error enhancing the unified dataset. Exiting..."
     exit 1
-  fi
-done
+fi
 
-echo "=== Data Generation Complete ==="
+# Step 3: Apply fraud detection rules
+echo "Step 3: Applying fraud detection rules..."
+python scripts/fraud_rules.py
+if [ $? -ne 0 ]; then
+    echo " Error applying fraud detection rules. Exiting..."
+    exit 1
+fi
+
+# Step 4: Preprocess the data
+echo " Step 4: Preprocessing data for machine learning..."
+python scripts/preprocess_data.py
+if [ $? -ne 0 ]; then
+    echo " Error preprocessing dataset. Exiting..."
+    exit 1
+fi
+
+# Step 5: Perform feature selection
+echo " Step 5: Selecting important features..."
+python scripts/feature_selection.py
+if [ $? -ne 0 ]; then
+    echo " Error selecting features. Exiting..."
+    exit 1
+fi
+
+# Step 6: Train and save the machine learning model
+echo " Step 6: Training the machine learning model..."
+python scripts/model_training.py
+if [ $? -ne 0 ]; then
+    echo " Error training the machine learning model. Exiting..."
+    exit 1
+fi
+
+# Step 7: Deploy and run the Streamlit dashboard
+echo "Step 7: Launching the Streamlit dashboard..."
+streamlit run app/dashboard.py --server.port 8501 --server.headless true
+if [ $? -ne 0 ]; then
+    echo " Error launching the Streamlit
+    exit 1
+fi
+
+echo " All steps completed successfully!"
