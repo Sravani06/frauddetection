@@ -1,133 +1,46 @@
--- ==========================
--- DROP EXISTING TABLES
--- ==========================
-DROP TABLE IF EXISTS CUSTOMER_DETAILS;
-DROP TABLE IF EXISTS CLAIM_DETAILS;
-DROP TABLE IF EXISTS POLICY_DETAILS;
-DROP TABLE IF EXISTS CLAIM_PARTICIPANT;
-DROP TABLE IF EXISTS CLAIM_STATUS;
-DROP TABLE IF EXISTS CLAIM_ADDITIONAL_DETAILS;
-DROP TABLE IF EXISTS CLAIM_INJURY_DETAILS;
-DROP TABLE IF EXISTS PAYMENT_DETAILS;
+CREATE TABLE IF NOT EXISTS Claim_Details (
+    CLAIM_ID INTEGER PRIMARY KEY AUTOINCREMENT,           -- Unique identifier for each claim
+    CLAIM_NUMBER VARCHAR(20) UNIQUE,                     -- Unique claim number (CLMYYYYMMDDXXXX)
+    CLAIM_OCCUR_DATE DATE NOT NULL,                      -- Date the claim occurred
+    CLAIM_STATE VARCHAR(2) CHECK (CLAIM_STATE IN ('CA', 'VA', 'NY', 'TX', 'FL', 'WA', 'MA', 'NV', 'OH', 'MI', 'WV', 'NJ')),
+    CLAIM_AMOUNT DECIMAL(10, 2) NOT NULL,                -- Amount of the claim
 
--- ==========================
--- CREATE TABLES
--- ==========================
+    POLICY_START_DATE DATE NOT NULL,                     -- Start date of the policy
+    POLICY_END_DATE DATE NOT NULL,                       -- End date of the policy
+    POLICY_RISK_LEVEL VARCHAR(10) CHECK (POLICY_RISK_LEVEL IN ('Low', 'Medium', 'High')),
+    POLICY_CLAIM_LIMIT DECIMAL(10, 2) NOT NULL,          -- Maximum claim limit for the policy
 
--- CUSTOMER_DETAILS TABLE
-CREATE TABLE CUSTOMER_DETAILS (
-    CUST_ID INTEGER PRIMARY KEY,
-    CUST_TYP TEXT CHECK(CUST_TYP IN ('prsn', 'busn')),
-    CUST_FRST_NM TEXT,
-    CUST_LST_NM TEXT,
-    CUST_GENDER TEXT CHECK(CUST_GENDER IN ('Male', 'Female', 'Other')),
-    CUST_DOB DATE,
-    CUST_DOD DATE,
-    CUST_ADDR TEXT,
-    CUST_CITY TEXT,
-    CUST_STATE TEXT,
-    CUST_ZIP TEXT,
-    CUST_PH_NO TEXT,
-    CUST_EMAIL TEXT,
-    CUST_TAX_ID TEXT,
-    CUST_TAX_ID_TYP TEXT CHECK(CUST_TAX_ID_TYP IN ('SSN', 'EIN'))
-);
+    CLAIMANT_FIRST_NAME VARCHAR(50) NOT NULL,            -- Claimant's first name
+    CLAIMANT_LAST_NAME VARCHAR(50) NOT NULL,             -- Claimant's last name
+    CLAIMANT_STATE VARCHAR(2) CHECK (CLAIMANT_STATE IN ('CA', 'VA', 'NY', 'TX', 'FL', 'WA', 'MA', 'NV', 'OH', 'MI', 'WV', 'NJ')),
+    CLAIMANT_INDUSTRY VARCHAR(50),                      -- Industry where the claimant works
 
--- CLAIM_DETAILS TABLE
-CREATE TABLE CLAIM_DETAILS (
-    CLM_DTL_ID INTEGER PRIMARY KEY,
-    CLM_NO TEXT UNIQUE,
-    PLCY_NO TEXT,
-    CLM_JUR_TYP_CD TEXT,
-    CLM_RPT_DT DATE,
-    CLM_OCCR_DT DATE,
-    CLM_OCCR_ADDR TEXT,
-    CLM_OCCR_CITY TEXT,
-    CLM_OCCR_ZIP TEXT,
-    CLM_OCCR_STATE TEXT,
-    CLM_TYP TEXT CHECK(CLM_TYP IN ('Medical', 'Indemnity')),
-    CLM_AMT REAL,
-    FOREIGN KEY (PLCY_NO) REFERENCES POLICY_DETAILS(PLCY_NO)
-);
+    INSURED_FIRST_NAME VARCHAR(50) NOT NULL,             -- Insured's first name
+    INSURED_LAST_NAME VARCHAR(50) NOT NULL,              -- Insured's last name
+    INSURED_STATE VARCHAR(2) CHECK (INSURED_STATE IN ('CA', 'VA', 'NY', 'TX', 'FL', 'WA', 'MA', 'NV', 'OH', 'MI', 'WV', 'NJ')),
+    INSURED_INDUSTRY VARCHAR(50),                       -- Industry of the insured
 
--- POLICY_DETAILS TABLE
-CREATE TABLE POLICY_DETAILS (
-    PLCY_DTL_ID INTEGER PRIMARY KEY,
-    PLCY_NO TEXT UNIQUE,
-    PLCY_STRT_DT DATE,
-    PLCY_END_DT DATE
-);
+    MEDICAL_PROVIDER_FIRST_NAME VARCHAR(50) NOT NULL,    -- Medical provider's first name
+    MEDICAL_PROVIDER_LAST_NAME VARCHAR(50) NOT NULL,     -- Medical provider's last name
+    MEDICAL_PROVIDER_STATE VARCHAR(2) CHECK (MEDICAL_PROVIDER_STATE IN ('CA', 'VA', 'NY', 'TX', 'FL', 'WA', 'MA', 'NV', 'OH', 'MI', 'WV', 'NJ')),
 
--- CLAIM_PARTICIPANT TABLE
-CREATE TABLE CLAIM_PARTICIPANT (
-    CLM_PTCP_ID INTEGER PRIMARY KEY,
-    CLM_ID INTEGER,
-    CUST_ID INTEGER,
-    CUST_TYP TEXT CHECK(CUST_TYP IN ('prsn', 'busn')),
-    PTCP_TYP TEXT CHECK(PTCP_TYP IN ('Claimant', 'Insured', 'Provider')),
-    FOREIGN KEY (CLM_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID),
-    FOREIGN KEY (CUST_ID) REFERENCES CUSTOMER_DETAILS(CUST_ID)
-);
+    INJURY_BODY_PART VARCHAR(50) CHECK (INJURY_BODY_PART IN (
+        'Head', 'Back', 'Arm', 'Leg', 'Shoulder', 'Hand', 'Foot',
+        'Neck', 'Chest', 'Abdomen', 'Hip', 'Knee', 'Elbow', 'Ankle',
+        'Wrist', 'Neck and Spine', 'Toes', 'Fingers', 'Teeth',
+        'Ears', 'Eyes', 'Internal Organs', 'Pelvis', 'Groin'
+    )),
+    INJURY_TYPE VARCHAR(50) CHECK (INJURY_TYPE IN (
+        'Fracture', 'Burn', 'Sprain', 'Cut', 'Bruise', 'Amputation',
+        'Dislocation', 'Puncture', 'Contusion', 'Crush Injury', 'Tear',
+        'Laceration', 'Concussion', 'Whiplash', 'Electric Shock',
+        'Frostbite', 'Poisoning', 'Radiation Exposure', 'Chemical Exposure',
+        'Nerve Damage', 'Soft Tissue Injury', 'Eye Injury', 'Hearing Loss'
+    )),
+    INJURY_SEVERITY VARCHAR(10) CHECK (INJURY_SEVERITY IN ('Low', 'Medium', 'High')),
+    TREATMENT_REQUIRED VARCHAR(3) CHECK (TREATMENT_REQUIRED IN ('Yes', 'No')),
+    DAYS_LOST INTEGER,                                   -- Number of days lost due to the injury
+    PRESCRIBER_NOTES TEXT,                               -- Notes provided by the medical prescriber
 
--- CLAIM_STATUS TABLE
-CREATE TABLE CLAIM_STATUS (
-    CLM_STS_ID INTEGER PRIMARY KEY,
-    CLM_DTL_ID INTEGER,
-    CLM_STS_CD TEXT CHECK(CLM_STS_CD IN ('Pending', 'Accepted', 'Declined')),
-    CLM_STS_START_DT DATETIME,
-    CLM_STS_END_DT DATETIME,
-    STATUS_REASON TEXT,
-    STATUS_UPDATED_BY TEXT,
-    STATUS_SOURCE TEXT CHECK(STATUS_SOURCE IN ('Manual', 'Automated')),
-    FOREIGN KEY (CLM_DTL_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
-);
-
--- CLAIM_ADDITIONAL_DETAILS TABLE
-CREATE TABLE CLAIM_ADDITIONAL_DETAILS (
-    CLM_DTL_ID INTEGER PRIMARY KEY,
-    CLMT_HIRE_DT DATE,
-    CLMT_JOB_TTL TEXT,
-    CLMT_JOB_TYP TEXT CHECK(CLMT_JOB_TYP IN ('Full-time', 'Part-time')),
-    CLMT_DISAB_BGN_DT DATE,
-    CLMT_AVG_WKLY_WAGE REAL,
-    WORK_LOC TEXT,
-    INDUSTRY TEXT,
-    JOB_DESC TEXT,
-    WORK_ENVIRONMENT TEXT CHECK(WORK_ENVIRONMENT IN ('On-site', 'Remote', 'Hybrid')),
-    SUPERVISOR_NAME TEXT,
-    REPORTING_CHANNEL TEXT CHECK(REPORTING_CHANNEL IN ('Web', 'Phone', 'Email')),
-    EMPLOYMENT_STATUS TEXT CHECK(EMPLOYMENT_STATUS IN ('Active', 'Terminated', 'On Leave')),
-    FOREIGN KEY (CLM_DTL_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
-);
-
--- CLAIM_INJURY_DETAILS TABLE
-CREATE TABLE CLAIM_INJURY_DETAILS (
-    CLM_INJ_ID INTEGER PRIMARY KEY,
-    CLM_ID INTEGER,
-    INJURY_POB TEXT,
-    INJURY_SEVERITY TEXT CHECK(INJURY_SEVERITY IN ('High', 'Medium', 'Low')),
-    INJURY_TYP_CD TEXT,
-    PRESCRIBER_NOTES TEXT,
-    TREATMENT_REQUIRED TEXT CHECK(TREATMENT_REQUIRED IN ('Yes', 'No')),
-    DAYS_LOST INTEGER,
-    DOCTOR_NAME TEXT,
-    MEDICAL_PROVIDER TEXT,
-    FOREIGN KEY (CLM_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
-);
-
--- PAYMENT_DETAILS TABLE
-CREATE TABLE PAYMENT_DETAILS (
-    PAYMENT_ID INTEGER PRIMARY KEY,
-    CLM_ID INTEGER,
-    PAYMENT_DATE DATETIME,
-    PAYMENT_AMOUNT REAL,
-    PAYMENT_STATUS TEXT CHECK(PAYMENT_STATUS IN ('Processed', 'Pending', 'Failed')),
-    PAYMENT_METHOD TEXT CHECK(PAYMENT_METHOD IN ('Check', 'Wire Transfer', 'ACH', 'Direct Deposit')),
-    PAYMENT_TYPE TEXT CHECK(PAYMENT_TYPE IN ('Medical', 'Indemnity')),
-    BNFT_TYP_CD TEXT CHECK(BNFT_TYP_CD IN ('DIS', 'LOST_WAGES', 'PERM_IMPAIRMENT', 'VOC_REHAB')),
-    PAYEE_NAME TEXT,
-    PAYEE_ACCOUNT TEXT,
-    CURRENCY TEXT CHECK(CURRENCY IN ('USD', 'EUR', 'GBP', 'CAD', 'JPY')),
-    EXCHANGE_RATE REAL,
-    FOREIGN KEY (CLM_ID) REFERENCES CLAIM_DETAILS(CLM_DTL_ID)
+    DATE_SUBMITTED DATE DEFAULT CURRENT_DATE            -- Date the claim was submitted
 );

@@ -1,100 +1,86 @@
 import pandas as pd
-import os
+import numpy as np
+import holidays
+import random
 
-# Paths
-DATA_PATH = os.path.join(os.getcwd(), 'data', 'Unified_Customer_Policy_Claim_Details.csv')
-OUTPUT_PATH = os.path.join(os.getcwd(), 'data', 'Enhanced_Unified_Dataset.csv')
+#  Load the Unified Data
+print("Loading unified customer policy claim details dataset...")
+df = pd.read_csv('data/Unified_Customer_Policy_Claim_Details.csv')
 
+# Convert date columns to datetime
+date_columns = ['CLM_RPT_DT', 'CLM_OCCR_DT', 'PLCY_STRT_DT', 'PLCY_END_DT']
+for col in date_columns:
+    df[col] = pd.to_datetime(df[col], errors='coerce')
 
-def enhance_dataset(df):
-    """Enhance the dataset with derived and interaction features."""
-    print(" Enhancing dataset with derived and interaction features...")
+# Initialize fraud indicator
+df['CLM_FRAUD_IND'] = 0
 
-    # Validate required columns
-    required_columns = ['CLM_RPT_DT', 'CLM_OCCR_DT', 'PLCY_END_DT', 'PLCY_CLAIM_LIMIT', 'CLM_AMT']
-    for col in required_columns:
-        if col not in df.columns:
-            raise KeyError(f"Missing required column: {col}. Please ensure the unified dataset is complete.")
+# Time-Based Anomaly Rules
+df['Fraud_Rule_1'] = ((df['CLM_RPT_DT'] < df['CLM_OCCR_DT']) & df['CLM_RPT_DT'].notnull() & df['CLM_OCCR_DT'].notnull()).astype(int)
+df['Days_To_Policy_End'] = (df['PLCY_END_DT'] - df['CLM_OCCR_DT']).dt.days
+df['Fraud_Rule_2'] = ((df['Days_To_Policy_End'] <= 14) & (df['Days_To_Policy_End'] > 0)).astype(int)
+df['Days_From_Policy_Start'] = (df['CLM_OCCR_DT'] - df['PLCY_STRT_DT']).dt.days
+df['Fraud_Rule_3'] = ((df['Days_From_Policy_Start'] <= 14) & (df['Days_From_Policy_Start'] > 0)).astype(int)
+df['Fraud_Rule_4'] = df['CLM_RPT_DT'].dt.weekday.isin([5, 6]).astype(int)
+df['Days_Delay_Reporting'] = (df['CLM_RPT_DT'] - df['CLM_OCCR_DT']).dt.days
+df['Fraud_Rule_5'] = (df['Days_Delay_Reporting'] > 30).astype(int)
+df['Fraud_Rule_6'] = (df['Days_Delay_Reporting'] < 1).astype(int)
+df['Previous_Claim_Date'] = df.groupby('CUST_ID_CLAIMANT')['CLM_OCCR_DT'].shift(1)
+df['Days_Between_Claims'] = (df['CLM_OCCR_DT'] - df['Previous_Claim_Date']).dt.days
+df['Fraud_Rule_7'] = ((df['Days_Between_Claims'] <= 30) & (df['Days_Between_Claims'] > 0)).astype(int)
+df['CLM_RPT_DT'] = pd.to_datetime(df['CLM_RPT_DT'], errors='coerce')
 
-    #  Convert date columns to datetime
-    date_columns = ['CLM_RPT_DT', 'CLM_OCCR_DT', 'PLCY_END_DT', 'PLCY_STRT_DT']
-    for col in date_columns:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
+# Add random hour and minute if CLM_RPT_DT does not have time
+df['CLM_RPT_DT'] = df['CLM_RPT_DT'].apply(lambda x: x + pd.Timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59)) if pd.notnull(x) else x)
 
-    #  Derived Features
-    # 1. Days between occurrence and report
-    df['DAYS_BETWEEN_OCCUR_AND_REPORT'] = (df['CLM_RPT_DT'] - df['CLM_OCCR_DT']).dt.days
+# Rule 8: Claims reported during unusual hours (10 PM to 6 AM)
+# Only mark 1% of these claims as fraudulent
+def mark_fraud_based_on_time(x):
+    if pd.notnull(x) and (x.hour >= 22 or x.hour <= 6):
+        return 1 if random.random() <= 0.01 else 0  # 1% chance of being fraud
+    return 0
 
-    # 2. Flag for late report (more than 30 days)
-    df['LATE_REPORT_FLAG'] = (df['DAYS_BETWEEN_OCCUR_AND_REPORT'] > 30).astype(int)
+df['Fraud_Rule_8'] = df['CLM_RPT_DT'].apply(mark_fraud_based_on_time)
 
-    # 3. Proximity of claim occurrence to policy end date
-    df['DAYS_TO_POLICY_END'] = (df['PLCY_END_DT'] - df['CLM_OCCR_DT']).dt.days
+# Financial Anomaly Rules**
+df['Fraud_Rule_9'] = ((df['CLM_AMT'] > 0.9 * df['PLCY_CLAIM_LIMIT']) & df['CLM_AMT'].notnull()).astype(int)
+df['Previous_Claim_Amount'] = df.groupby('CUST_ID_INSURED')['CLM_AMT'].shift(1)
+df['Fraud_Rule_10'] = ((df['CLM_AMT'] > 3 * df['Previous_Claim_Amount']) & (df['INJURY_SEVERITY'] != 'High')).astype(int)
+df['Fraud_Rule_11'] = df.groupby(['CUST_ID_INSURED', 'CLM_AMT'])['CLM_NO'].transform('count') > 1
+df['Fraud_Rule_12'] = df.groupby('CUST_ID_CLAIMANT')['CLM_NO'].transform('count') > 5
 
-    # 4. Percent of claim amount relative to the policy claim limit
-    df['CLM_AMT_PERCENT_LIMIT'] = df['CLM_AMT'] / df['PLCY_CLAIM_LIMIT']
+# Injury-Related Anomaly Rules**
+df['Fraud_Rule_13'] = ((df['INJURY_TYPE'] == 'Burn') & (df['INJURY_BODY_PART'] == 'Back')).astype(int)
+df['Fraud_Rule_14'] = ((df['INJURY_SEVERITY'] == 'High') & (df['TREATMENT_REQUIRED'] == 'No')).astype(int)
+df['Fraud_Rule_15'] = df.groupby(['CUST_ID_CLAIMANT', 'INJURY_BODY_PART'])['CLM_DTL_ID'].transform('count') > 2
+df['Fraud_Rule_16'] = ((df['INJURY_BODY_PART'] == 'Head') & (df['INJURY_TYPE'] == 'Burn')).astype(int)
+df['Fraud_Rule_17'] = ((df['INJURY_TYPE'] == 'Fracture') & (df['INJURY_BODY_PART'] == 'Neck')).astype(int)
+df['Fraud_Rule_18'] = ((df['INJURY_TYPE'] == 'Amputation') & (df['INJURY_BODY_PART'].isin(['Head', 'Chest', 'Back']))).astype(int)
+df['Fraud_Rule_19'] = ((df['INJURY_BODY_PART'] == 'Internal Organs') & (df['TREATMENT_REQUIRED'] == 'No')).astype(int)
+df['Fraud_Rule_20'] = df.groupby('CLM_DTL_ID')['INJURY_BODY_PART'].transform('nunique') > 3
 
-    # 5. Flag if claim amount exceeds 90% of the policy claim limit
-    df['SUSPICIOUS_CLAIM_AMOUNT'] = (df['CLM_AMT_PERCENT_LIMIT'] > 0.9).astype(int)
+# Behavioral Anomaly Rules**
+df['Fraud_Rule_21'] = df.groupby(['CUST_ID_CLAIMANT', 'CLM_OCCR_DT'])['CLM_DTL_ID'].transform('count') > 1
+us_holidays = holidays.US(years=[2023, 2024,2022, 2021, 2022])
+df['Fraud_Rule_22'] = df['CLM_RPT_DT'].dt.date.apply(lambda x: 1 if x in us_holidays else 0)
+df['Fraud_Rule_23'] = df.groupby('CUST_ID_CLAIMANT')['CUST_ID_MED_PROV'].nunique() > 5
+df['Fraud_Rule_24'] = df.groupby(['CUST_ID_MED_PROV', 'CLM_OCCR_DT'])['CLM_DTL_ID'].transform('count') > 3
+df['Fraud_Rule_25'] = df.groupby(['CUST_ID_CLAIMANT', 'CLM_RPT_DT'])['CLM_DTL_ID'].transform('count') > 1
+df['Fraud_Rule_26'] = ((df['INJURY_SEVERITY'] == 'High') & (df['DAYS_LOST'] < 3)).astype(int)
+df['Fraud_Rule_27'] = ((df['INJURY_SEVERITY'] == 'Low') & (df['DAYS_LOST'] > 30)).astype(int)
+df['Fraud_Rule_28'] = ((df['INJURY_SEVERITY'] == 'Medium') & (df['DAYS_LOST'] > 60)).astype(int)
+df['Fraud_Rule_29'] = ((df['INJURY_SEVERITY'] == 'High') & (df['TREATMENT_REQUIRED'] == 'No')).astype(int)
+df['Fraud_Rule_30'] = ((df['INJURY_SEVERITY'] == 'Low') & (df['TREATMENT_REQUIRED'] == 'Yes')).astype(int)
 
-    # 6. Employment Status Indicator (set to 1 if employment status is "Active")
-    if 'EMPLOYMENT_STATUS' in df.columns:
-        df['EMPLOYMENT_ACTIVE_FLAG'] = (df['EMPLOYMENT_STATUS'] == 'Active').astype(int)
+# Fraud Indicator Calculation**
+fraud_rules = [col for col in df.columns if 'Fraud_Rule' in col]
+df['CLM_FRAUD_IND'] = (df[fraud_rules].sum(axis=1) > 2).astype(int)
 
-    #  Interaction Features
-    # Example: Claim amount and risk level interaction
-    if 'RISK_LEVEL' in df.columns:
-        risk_mapping = {'Low': 1, 'Medium': 2, 'High': 3}
-        df['RISK_LEVEL_NUMERIC'] = df['RISK_LEVEL'].map(risk_mapping)
-        df['HIGH_RISK_HIGH_AMOUNT'] = ((df['RISK_LEVEL_NUMERIC'] == 3) & (df['CLM_AMT_PERCENT_LIMIT'] > 0.8)).astype(
-            int)
+# Save the Labeled Data**
+columns_to_drop = ['Days_Delay_Reporting', 'Days_Between_Claims', 'Previous_Claim_Date', 'Previous_Claim_Amount']
+df.drop(columns=columns_to_drop, inplace=True, errors='ignore')
+df.to_csv('data/Labeled_Unified_Customer_Policy_Claim_Details.csv', index=False)
 
-    #  Fraud Reason Update
-    fraud_reasons = []
-    for index, row in df.iterrows():
-        reasons = []
-        if row.get('LATE_REPORT_FLAG', 0) == 1:
-            reasons.append('Late Report')
-        if row.get('SUSPICIOUS_CLAIM_AMOUNT', 0) == 1:
-            reasons.append('Suspicious Claim Amount')
-        if row.get('HIGH_RISK_HIGH_AMOUNT', 0) == 1:
-            reasons.append('High Risk and High Claim Amount')
-        if row.get('DAYS_TO_POLICY_END', 0) < 7:
-            reasons.append('Claim Near Policy End')
-        if reasons:
-            fraud_reasons.append(', '.join(reasons))
-        else:
-            fraud_reasons.append('None')
-
-    df['UPDATED_FRAUD_REASON'] = fraud_reasons
-
-    print("Dataset enhancement complete!")
-    return df
-
-
-def save_enhanced_data(df, output_path):
-    """Save the enhanced dataset to a CSV file."""
-    try:
-        df.to_csv(output_path, index=False)
-        print(f"Enhanced dataset saved to {output_path}")
-    except Exception as e:
-        print(f" Failed to save enhanced dataset: {e}")
-
-
-if __name__ == "__main__":
-    try:
-        print("🔍 Loading unified dataset...")
-        # Load the unified dataset
-        unified_df = pd.read_csv(DATA_PATH)
-
-        print(f" Unified dataset loaded. Shape: {unified_df.shape}")
-
-        # Enhance the dataset
-        enhanced_df = enhance_dataset(unified_df)
-
-        # Save the enhanced dataset
-        save_enhanced_data(enhanced_df, OUTPUT_PATH)
-
-    except Exception as e:
-        print(f" An error occurred: {e}")
+# Print Fraud Distribution**
+fraud_distribution = df['CLM_FRAUD_IND'].value_counts(normalize=True)
+print(f"Fraud label distribution: \n{fraud_distribution}")

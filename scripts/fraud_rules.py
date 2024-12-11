@@ -1,8 +1,6 @@
 import pandas as pd
-import random
 
 def identify_fraud(df, fraud_percentage=0.15):
-    """Identify fraudulent claims using 21 enhanced fraud rules (after removing 6 rules)."""
     print("Identifying potential fraud using 21 enhanced rules...")
 
     #  Required Conversions

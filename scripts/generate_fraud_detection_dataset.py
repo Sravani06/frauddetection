@@ -50,6 +50,24 @@ business_type_to_name_mapping = {
 # Business name suffixes to be added randomly
 business_suffixes = ['LLC', 'Inc.', 'Group', 'Solutions', 'Corporation', 'Partners']
 
+# Enhanced list of body parts
+injury_body_parts = [
+    'Head', 'Back', 'Arm', 'Leg', 'Shoulder', 'Hand', 'Foot',
+    'Neck', 'Chest', 'Abdomen', 'Hip', 'Knee', 'Elbow', 'Ankle',
+    'Wrist', 'Neck and Spine', 'Toes', 'Fingers', 'Teeth',
+    'Ears', 'Eyes', 'Internal Organs', 'Pelvis', 'Groin'
+]
+
+# Enhanced list of injury types
+injury_types = [
+    'Fracture', 'Burn', 'Sprain', 'Cut', 'Bruise', 'Amputation',
+    'Dislocation', 'Puncture', 'Contusion', 'Crush Injury', 'Tear',
+    'Laceration', 'Concussion', 'Whiplash', 'Electric Shock',
+    'Frostbite', 'Poisoning', 'Radiation Exposure', 'Chemical Exposure',
+    'Nerve Damage', 'Soft Tissue Injury', 'Eye Injury', 'Hearing Loss'
+]
+
+
 
 # Function to clean phone number (keep only 10 digits)
 def clean_phone_number(phone_number):
@@ -74,7 +92,6 @@ def generate_unique_policy_number(existing_numbers):
 
 # Function to generate unique claim number
 def generate_unique_claim_number(existing_claim_numbers, year):
-    """Generate a unique claim number formatted as YYYYXXXXXX where YYYY is the year of the claim, and XXXXXX is 6 random digits."""
     while True:
         claim_number = f"{year}{random.randint(100000, 999999)}"
         if claim_number not in existing_claim_numbers:
@@ -248,11 +265,10 @@ def generate_policy_details(insured_customers, min_policies=5000):
     print(f"Policy details generation completed. Total policies generated: {len(policy_df)}")
     return policy_df
 
-def generate_claim_details(policy_df, customer_df, min_claims=15000, fraud_percentage=0.15):
-    """
-    Generate claim details with realistic claim amount patterns and fraud indicators.
-    """
-    print(" Claim details generation started...")
+
+def generate_claim_details(policy_df, customer_df, min_claims=15000, fraud_percentage=0.05):
+
+    print("Claim details generation started...")
     claim_data = []
     claim_id = 11001  # Start CLM_DTL_ID at 11001
     existing_claim_numbers = set()  # Track unique claim numbers
@@ -274,13 +290,27 @@ def generate_claim_details(policy_df, customer_df, min_claims=15000, fraud_perce
         policy_start_date = pd.to_datetime(policy['PLCY_STRT_DT']).date()
         policy_end_date = pd.to_datetime(policy['PLCY_END_DT']).date()
 
-        clm_occur_date = fake.date_between(start_date=policy_start_date, end_date=policy_end_date)
-        clm_report_date = clm_occur_date + timedelta(days=random.choice([1, 2]))
+        # Determine claim occurrence date
+        claim_type = random.choices(['regular', 'near_end'], weights=[0.98, 0.02], k=1)[0]
 
-        #  Generate Claim Amount (CLM_AMT) with realistic patterns
+        if claim_type == 'regular':
+            # Claims occur randomly in the policy period, excluding the first 30 days and last 30 days
+            min_claim_date = policy_start_date + timedelta(days=30)
+            max_claim_date = policy_end_date - timedelta(days=30)
+            clm_occur_date = fake.date_between(start_date=min_claim_date, end_date=max_claim_date)
+        else:
+            # Claims occur in the last 30 days of the policy (2% chance)
+            clm_occur_date = fake.date_between(start_date=policy_end_date - timedelta(days=30),
+                                               end_date=policy_end_date)
+
+        # Generate report date ranging from 4 to 40 days after the occurrence date
+        days_offset = random.choices(range(4, 41), weights=[1 if i > 30 else 19 for i in range(4, 41)], k=1)[0]
+        clm_report_date = clm_occur_date + timedelta(days=days_offset)
+
+        # Generate claim amount with realistic patterns
         if fraud_claims_count < total_fraud_claims:
             # Fraudulent claims tend to have higher amounts close to the claim limit
-            clm_amount = round(random.uniform(0.8 * policy['PLCY_CLAIM_LIMIT'], policy['PLCY_CLAIM_LIMIT']), 2)
+            clm_amount = round(random.uniform(0.9 * policy['PLCY_CLAIM_LIMIT'], policy['PLCY_CLAIM_LIMIT']), 2)
         else:
             # Non-fraudulent claims use a triangular distribution (more claims between $500 and $5000)
             clm_amount = round(random.triangular(10, 5000, 10000), 2)
@@ -293,7 +323,7 @@ def generate_claim_details(policy_df, customer_df, min_claims=15000, fraud_perce
         clm_occr_city = fake.city()
         clm_occr_zip = fake.zipcode()
 
-        #  Fraud Indicator and Logic
+        # Fraud Indicator and Logic
         clm_fraud_ind = 0
         fraud_reasons = []
 
@@ -312,7 +342,8 @@ def generate_claim_details(policy_df, customer_df, min_claims=15000, fraud_perce
                 fraud_reasons.append('High Claim Amount Near Policy Limit')
 
             if random.random() < 0.15:  # Add mismatched state logic to some frauds
-                clm_occr_state = random.choice([state for state in states if state != insured_customer['CUST_STATE']])
+                clm_occr_state = random.choice(
+                    [state for state in customer_df['CUST_STATE'].unique() if state != insured_customer['CUST_STATE']])
                 clm_fraud_ind = 1
                 fraud_reasons.append('Mismatched Insured, Claimant, or Provider State')
             else:
@@ -364,7 +395,7 @@ def generate_claim_details(policy_df, customer_df, min_claims=15000, fraud_perce
     ])
 
     print(
-        f" Total Claims: {len(claim_df)} | Fraudulent Claims: {claim_df['CLM_FRAUD_IND'].sum()} (Target: {total_fraud_claims})")
+        f"Total Claims: {len(claim_df)} | Fraudulent Claims: {claim_df['CLM_FRAUD_IND'].sum()} (Target: {total_fraud_claims})")
     return claim_df
 
 
@@ -425,7 +456,7 @@ def generate_claim_additional_details(claim_df):
         ])
 
     additional_details_df = pd.DataFrame(additional_details, columns=[
-        'CLM_DTL_ID', 'CLMT_HIRE_DT', 'CLMT_JOB_TTL', 'CLMT_JOB_TYP',
+        'CLM_DTL_ID', 'CLMT_HIRE_DT', 'CLMT_JOB_TITLE', 'CLMT_JOB_TYP',
         'CLMT_DISAB_BGN_DT', 'CLMT_AVG_WKLY_WAGE', 'JOB_DESC',
         'WORK_ENVIRONMENT', 'EMPLOYMENT_STATUS', 'FRAUD_REASON_ADDITIONAL'
     ])
@@ -436,8 +467,6 @@ def generate_injury_details(claim_df, customer_df):
     print(" Generating Injury Details...")
     injury_data = []
     injury_id = 111001  # Start injury ID from INJ111001
-    injury_body_parts = ['Head', 'Back', 'Arm', 'Leg', 'Shoulder', 'Hand', 'Foot']
-    injury_types = ['Fracture', 'Burn', 'Sprain', 'Cut', 'Bruise']
     injury_severities = ['Low', 'Medium', 'High']
     fraud_notes = ['suspected exaggeration', 'requires further investigation', 'inconsistent patient history']
 
@@ -499,7 +528,7 @@ def generate_injury_details(claim_df, customer_df):
             # Append the generated injury record
             injury_data.append([
                 f"INJ{injury_id}", clm_dtl_id, injury_pob, injury_severity,
-                injury_type, prescriber_notes, treatment_required, days_lost, medical_provider
+                injury_type, treatment_required, days_lost
             ])
             injury_id += 1
 
@@ -511,9 +540,9 @@ def generate_injury_details(claim_df, customer_df):
 
     # Create Injury Details DataFrame
     injury_df = pd.DataFrame(injury_data, columns=[
-        'CLM_INJ_ID', 'CLM_DTL_ID', 'INJURY_POB', 'INJURY_SEVERITY',
-        'INJURY_TYP_CD', 'PRESCRIBER_NOTES', 'TREATMENT_REQUIRED',
-        'DAYS_LOST', 'MEDICAL_PROVIDER'
+        'CLM_INJ_ID', 'CLM_DTL_ID', 'INJURY_BODY_PART', 'INJURY_SEVERITY',
+        'INJURY_TYPE', 'TREATMENT_REQUIRED',
+        'DAYS_LOST'
     ])
     print(f" Injury Details generated: {len(injury_df)} injuries.")
     return injury_df, claim_df
@@ -720,12 +749,13 @@ def generate_all_csvs():
     # Drop unnecessary columns
     unified_df.drop(columns=[ 'MEDPROV_CUST_DOD', 'MEDPROV_CUST_DOB', 'MEDPROV_CUST_GENDER', 'MEDPROV_CUST_LST_NM', 'INSURED_CUST_DOD'
                               , 'INSURED_CUST_DOB', 'INSURED_CUST_GENDER', 'INSURED_CUST_LST_NM', 'CUST_ID', 'INSURED_CUST_TYP'
-                              , 'INSURED_CUST_TAX_ID_TYP', 'CLAIMANT_CUST_ID', 'CLAIMANT_CUST_TYP', 'CLAIMANT_CUST_TAX_ID_TYP'
-                              , 'MEDPROV_CUST_ID', 'MEDPROV_CUST_TAX_ID_TYP', 'INSURED_CUST_CITY', 'INSURED_CUST_ADDR', 'INSURED_CUST_ZIP'
+                              , 'INSURED_CUST_TAX_ID_TYP', 'CLAIMANT_CUST_TYP', 'CLAIMANT_CUST_TAX_ID_TYP'
+                              , 'MEDPROV_CUST_ID', 'MEDPROV_CUST_TAX_ID_TYP', 'INSURED_CUST_CITY', 'INSURED_CUST_ZIP'
                               , 'CLAIMANT_CUST_ZIP', 'MEDPROV_CUST_TYP', 'MEDPROV_CUST_ADDR', 'MEDPROV_CUST_CITY', 'MEDPROV_CUST_ZIP'
                               , 'MEDPROV_CUST_EMAIL', 'MEDPROV_CUST_PH_NO', 'MEDPROV_CUST_TAX_ID', 'INSURED_CUST_PH_NO', 'INSURED_CUST_EMAIL'
                               , 'INSURED_CUST_TAX_ID', 'CLAIMANT_CUST_ADDR', 'CLAIMANT_CUST_CITY', 'CLAIMANT_CUST_PH_NO', 'CLAIMANT_CUST_EMAIL'
-
+                              , 'CLM_FRAUD_IND', 'FRAUD_REASON',  'PLCY_DTL_ID', 'INSURED_CUST_ID', 'CLM_STS_ID', 'STATUS_REASON'
+                              , 'CLM_INJ_ID', 'FRAUD_REASON_ADDITIONAL', 'CLAIMANT_CUST_ID'
     ], inplace=True, errors='ignore')
 
     print("Saving Unified CSV...")
